@@ -4,7 +4,7 @@
 declare -a ARCHITECTURES=("arm" "armv7a" "x86")
 
 # OpenSSL version to download if src is missing
-OPENSSL_VERSION="1.0.2h"
+OPENSSL_VERSION="1.0.2j"
 
 # Set acccording to your Android NDK
 ANDROID_PLATFORM="android-14"
