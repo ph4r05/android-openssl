@@ -3,7 +3,7 @@
 * Supports build for multiple architectures - ARM, ARMv7, X86
 * Uses OpenSSL source codes
 * Integrated with Android.mk build
-* Contains pre-compiled OpenSSL 1.0.2h (use if you want or compile your own)
+* Contains pre-compiled OpenSSL 1.0.2j (use if you want or compile your own)
 
 ## How to compile
 

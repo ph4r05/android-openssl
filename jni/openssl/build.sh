@@ -1,22 +1,24 @@
 #!/bin/bash
 
 # Architectures to build libraries for
-declare -a ARCHITECTURES=("arm" "armv7a" "x86")
+declare -a ARCHITECTURES=("arm" "armv7a" "x86" "arm64v8")
 
 # OpenSSL version to download if src is missing
 OPENSSL_VERSION="1.0.2j"
 
 # Set acccording to your Android NDK
-ANDROID_PLATFORM="android-14"
+ANDROID_PLATFORM="android-21"
 
-ANDROID_ARM_TOOLCHAIN="arm-linux-androideabi-4.8"
-ANDROID_X86_TOOLCHAIN="x86-4.8"
+ANDROID_ARM_TOOLCHAIN="arm-linux-androideabi-4.9"
+ANDROID_X86_TOOLCHAIN="x86-4.9"
+ANDROID_ARM64_V8_TOOLCHAIN="aarch64-linux-android-4.9"
 
 ####################################################################################################
 ## Do not modify below this line unless you know what are you doing
 
 ANDROID_ARM_ARCH="arch-arm"
 ANDROID_X86_ARCH="arch-x86"
+ANDROID_ARM64_ARCH="arch-arm64"
 
 ####################################################################################################
 
@@ -106,12 +108,29 @@ function compileArmv7 () {
     export ANDROID_DEV="$ANDROID_NDK/platforms/${ANDROID_PLATFORM}/${ANDROID_ARM_ARCH}/usr"
     export HOSTCC=gcc
     env
-    PATH=$TOOLCHAIN_PATH:$PATH ./config shared no-ssl2 no-ssl3 no-comp no-hw
+    PATH=$TOOLCHAIN_PATH:$PATH ./config shared
     PATH=$TOOLCHAIN_PATH:$PATH make depend
     PATH=$TOOLCHAIN_PATH:$PATH make
 }
 
 ####################################################################################################
+
+function compileArm64v8(){
+    export TOOLCHAIN_PATH=$(getToolchainDir $ANDROID_ARM64_V8_TOOLCHAIN)
+    export TOOL=aarch64-linux-android
+    export SYSTEM=android
+    export ARCH=arm
+    export CROSS_COMPILE="aarch64-linux-android-"
+    export ANDROID_DEV="$ANDROID_NDK/platforms/${ANDROID_PLATFORM}/${ANDROID_ARM64_ARCH}/usr"
+    export HOSTCC=gcc
+    env
+    PATH=$TOOLCHAIN_PATH:$PATH ./Configure android shared
+    PATH=$TOOLCHAIN_PATH:$PATH make depend
+    PATH=$TOOLCHAIN_PATH:$PATH make
+}
+
+####################################################################################################
+
 # ARM
 function compileArm () {
     $ANDROID_NDK/build/tools/make-standalone-toolchain.sh --platform=${ANDROID_PLATFORM} --toolchain=${ANDROID_ARM_TOOLCHAIN} --install-dir=`pwd`/android-toolchain-arm
@@ -131,7 +150,7 @@ function compileArm () {
     export CXXFLAGS=" ${ARCH_FLAGS} -fpic -ffunction-sections -funwind-tables -fstack-protector -fno-strict-aliasing -finline-limit=64 -frtti -fexceptions "
     export CFLAGS=" ${ARCH_FLAGS} -fpic -ffunction-sections -funwind-tables -fstack-protector -fno-strict-aliasing -finline-limit=64 "
     export LDFLAGS=" ${ARCH_LINK} "
-    PATH=$TOOLCHAIN_PATH:$PATH ./Configure android shared no-ssl2 no-ssl3 no-comp no-hw
+    PATH=$TOOLCHAIN_PATH:$PATH ./Configure android shared
     PATH=$TOOLCHAIN_PATH:$PATH make depend
     PATH=$TOOLCHAIN_PATH:$PATH make
 }
@@ -148,7 +167,7 @@ function compileX86 () {
     export CROSS_COMPILE="i686-linux-android-"
     export ANDROID_DEV="$ANDROID_NDK/platforms/${ANDROID_PLATFORM}/${ANDROID_X86_ARCH}/usr"
     export HOSTCC=gcc
-    PATH=$TOOLCHAIN_PATH:$PATH ./config shared no-ssl2 no-ssl3 no-comp no-hw
+    PATH=$TOOLCHAIN_PATH:$PATH ./config shared
     PATH=$TOOLCHAIN_PATH:$PATH make depend
     PATH=$TOOLCHAIN_PATH:$PATH make
 }
@@ -179,6 +198,11 @@ function buildArchitectureSeparately () {
     # Particular build commands
     cleanVars
     case "$curArch" in
+    arm64*)
+        echo "64-v8a"
+        compileArm64v8
+        LIBDIR="${UDIR}/arch-arm64/lib"
+        ;;
     armv7*)
         echo "armv7"
         compileArmv7
@@ -198,11 +222,11 @@ function buildArchitectureSeparately () {
         compileX86
         LIBDIR="${UDIR}/arch-x86/lib"
         ;;
-
     esac
     mkdir -p "$LIBDIR"
     cp lib*.a "$LIBDIR"
     cp lib*.so "$LIBDIR"
+    cp lib*.so.1.0.0 "$LIBDIR"
 }
 
 for i in "${ARCHITECTURES[@]}"
