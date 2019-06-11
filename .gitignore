@@ -4,5 +4,6 @@
 jni/openssl/*.gz
 jni/openssl/sources/*
 jni/openssl/sources_*/*
+.DS_Store
 
 
